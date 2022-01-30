@@ -45,6 +45,8 @@ venue_data <- select(venue_data, name, city, postalCode, address, url, location)
 ## Unnest the dataframe further, because we have nested data in the df. Then change the names of the df.
 venue_data <- venue_data %>% unnest(c(location, city, address), names_repair = "minimal")
 colnames(venue_data) <- c("name", "city", "postalCode", "address", "url", "longitude", "latitude")
+venue_data$longitude <- as.double(venue_data$longitude)
+venue_data$latitude <- as.double(venue_data$latitude)
 
 # Have a quick look to compare the df with the given data from the assignment
 glimpse(venue_data)
@@ -64,4 +66,34 @@ glimpse(venue_data)
 ## in Germany. After each iteration, extract the seven variables name, city, postalCode, address, url,
 ## longitude, and latitude. Join the information in one large data frame.
 
-n <- 
+
+### Total results (from website)
+n <- 12568
+
+### Entries per page
+entries_per_page <- 20
+
+### Number of complete pages
+pages <- floor(n/entries_per_page)
+
+### Number of entries on last imcomplete page
+remainder <- n - pages*entries_per_page
+
+### Now we create a dataframe
+
+venue_data_long <- tibble(
+  name = character(n),
+  city = character(n),
+  postalCode = character(n),
+  address = character(n),
+  url = character(n),
+  longitude = double(n),
+  latitude = double(n)
+)
+
+for (i in 1:pages) {
+  search_result <- GET("https://app.ticketmaster.com/discovery/v2/venues?apikey=7elxdku9GGG5k8j0Xm8KWdANDgecHMV0&locale=*&countryCode=DE")
+  search_content <- content(search_result)
+  Sys.sleep(0.2)
+}
+
