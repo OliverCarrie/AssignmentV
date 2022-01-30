@@ -16,6 +16,12 @@ if (!require("rlist")) install.packages("rlist")
 if (!require("tidyverse")) install.packages("tidyverse")
 if (!require("naniar")) install.packages("naniar")
 
+library(jsonlite)
+library(httr)
+library(rlist)
+library(tidyverse)
+library(naniar)
+
 # Perform a first GET request, that searches for event venues in Germany (countryCode = "DE"). Extract
 # the content from the response object and inspect the resulting list. Describe what you can see.
 
@@ -47,5 +53,15 @@ glimpse(venue_data)
 # 4. Interacting with the API - advanced
 ##########################################################
 
+
 ## Check the API documentation under the section Venue Search. How can you request the venues from
 ## the remaining results pages?
+
+### There is the option in the parameters to select the page that you want to get. In total, there are 629 pages with 12568 elements.
+### What does that tell us? We have 628 pages with 20 entries and one page with less entries.
+
+## Write a for loop that iterates through the results pages and performs a GET request for all venues
+## in Germany. After each iteration, extract the seven variables name, city, postalCode, address, url,
+## longitude, and latitude. Join the information in one large data frame.
+
+n <- 
