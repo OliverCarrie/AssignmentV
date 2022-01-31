@@ -153,16 +153,18 @@ glimpse(venue_data_LV)
 
 # Map Of Latvia
 
+# Two datapoint are located outside of Latvia, I will have to remove them.
+
+venue_data_LV_clean <- filter(venue_data_LV, longitude != 0.00000 )
+
 ggplot() +
   geom_polygon(
     aes(x = long, y = lat, group = group), data = map_data("world", region = "Latvia"),
     fill = "grey90",color = "black") +
-  geom_point(data = venue_data_LV, aes(x = longitude, y = latitude)) +
+  geom_point(data = venue_data_LV_clean, aes(x = longitude, y = latitude)) +
   theme_void() + 
   coord_quickmap() +
   labs(title = "Event locations across Latvia", caption = "Source: ticketmaster.com") +
   theme(title = element_text(size=8, face='bold'),
         plot.caption = element_text(face = "italic"))
 
-# One datapoint is located outside of Latvia, I will have to remove it.
-## This venue is Porand.
