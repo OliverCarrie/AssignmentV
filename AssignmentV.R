@@ -25,8 +25,12 @@ library(naniar)
 # Perform a first GET request, that searches for event venues in Germany (countryCode = "DE"). Extract
 # the content from the response object and inspect the resulting list. Describe what you can see.
 
-APIcontent <- GET(url = "https://app.ticketmaster.com/discovery/v2/venues?apikey=7elxdku9GGG5k8j0Xm8KWdANDgecHMV0&locale=*&countryCode=DE")
+source("C:/Users/olica/OneDrive/Dokumente/Uni Tübingen/WS 21-22/DS400 - Data Science Project Management/Assignments/AssignmentV/API_Keys.R")
 
+APIcontent <- GET(url = "https://app.ticketmaster.com/discovery/v2/venues?",
+                  query = list(apikey = API_Key,
+                               locale = "*",
+                               countryCode = "DE"))
 
 # Extract the name, the city, the postalCode and address, as well as the url and the longitude and latitude of the venues to a data frame.
 
@@ -92,7 +96,10 @@ venue_data_long <- tibble(
 )
 
 for (i in 1:length(pages)) {
-  search_result <- GET("https://app.ticketmaster.com/discovery/v2/venues?apikey=7elxdku9GGG5k8j0Xm8KWdANDgecHMV0&locale=*&countryCode=DE")
+  search_result <- GET(url = "https://app.ticketmaster.com/discovery/v2/venues?",
+                                     query = list(apikey = API_Key,
+                                                  locale = "*",
+                                                  countryCode = "DE"))
   search_content <- fromJSON(content(search_result, as = "text"))
 
   Sys.sleep(0.2)
