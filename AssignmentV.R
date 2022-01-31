@@ -91,9 +91,42 @@ venue_data_long <- tibble(
   latitude = double(n)
 )
 
-for (i in 1:pages) {
+for (i in 1:length(pages)) {
   search_result <- GET("https://app.ticketmaster.com/discovery/v2/venues?apikey=7elxdku9GGG5k8j0Xm8KWdANDgecHMV0&locale=*&countryCode=DE")
-  search_content <- content(search_result)
+  search_content <- fromJSON(content(search_result, as = "text"))
+
   Sys.sleep(0.2)
 }
 
+
+
+
+# Map Of Germany
+
+# Eliminate values that are outside of range
+
+
+ggplot() +
+  geom_polygon(
+    aes(x = long, y = lat, group = group), data = map_data("world", region = "Germany"),
+    fill = "grey90",color = "black") +
+  geom_point(data = venue_data, aes(x = longitude, y = latitude)) +
+  theme_void() + coord_quickmap() +
+  labs(title = "Event locations across Germany", caption = "Source: ticketmaster.com") +
+  theme(title = element_text(size=8, face='bold'),
+        plot.caption = element_text(face = "italic"))
+
+
+
+
+
+#######################################################
+
+ggplot() +
+  geom_polygon(
+    aes(x = long, y = lat, group = group), data = map_data("world", region = "Switzerland"),
+    fill = "grey90",color = "black") +
+  theme_void() + coord_quickmap() +
+  labs(title = "Event locations across Switzerland", caption = "Source: ticketmaster.com") +
+  theme(title = element_text(size=8, face='bold'),
+        plot.caption = element_text(face = "italic"))
