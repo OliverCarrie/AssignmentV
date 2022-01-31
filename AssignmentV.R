@@ -124,6 +124,36 @@ ggplot() +
 ########## Latvia #####################################
 #######################################################
 
+APIcontent_LV <- GET(url = "https://app.ticketmaster.com/discovery/v2/venues?apikey=7elxdku9GGG5k8j0Xm8KWdANDgecHMV0&locale=*&countryCode=LV")
+
+# Extract the name, the city, the postalCode and address, as well as the url and the longitude and latitude of the venues to a data frame.
+
+## Get the content from the list
+event_LV <- jsonlite::fromJSON(content(APIcontent_LV, as = "text"))
+
+## Flatten list to eliminate the nested data
+venue_data_LV <- flatten(event_LV)
+
+## Convert data to dataframe
+venue_data_LV <- as.data.frame(venue_data_LV$venues)
+
+## Only select necessary columns
+venue_data_LV <- select(venue_data_LV, name, city, postalCode, address, url, location)
+
+## Unnest the dataframe further, because we have nested data in the df. Then change the names of the df.
+venue_data_LV <- venue_data_LV %>% unnest(c(location, city, address), names_repair = "minimal")
+colnames(venue_data_LV) <- c("name", "city", "postalCode", "address", "url", "longitude", "latitude")
+venue_data_LV$longitude <- as.double(venue_data_LV$longitude)
+venue_data_LV$latitude <- as.double(venue_data_LV$latitude)
+
+# Have a quick look to compare the df with the given data from the assignment
+glimpse(venue_data_LV)
+
+
+
+
+
+
 ggplot() +
   geom_polygon(
     aes(x = long, y = lat, group = group), data = map_data("world", region = "Latvia"),
