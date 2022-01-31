@@ -30,7 +30,8 @@ source("C:/Users/olica/OneDrive/Dokumente/Uni Tübingen/WS 21-22/DS400 - Data Sc
 APIcontent <- GET(url = "https://app.ticketmaster.com/discovery/v2/venues?",
                   query = list(apikey = API_Key,
                                locale = "*",
-                               countryCode = "DE"))
+                               countryCode = "DE"
+                               ))
 
 # Extract the name, the city, the postalCode and address, as well as the url and the longitude and latitude of the venues to a data frame.
 
@@ -93,17 +94,43 @@ venue_data_long <- tibble(
   url = character(n),
   longitude = double(n),
   latitude = double(n)
-)
+  )
 
-for (i in 1:length(pages)) {
+for (i in 1:pages) {
   search_result <- GET(url = "https://app.ticketmaster.com/discovery/v2/venues?",
                                      query = list(apikey = API_Key,
                                                   locale = "*",
-                                                  countryCode = "DE"))
+                                                  countryCode = "DE",
+                                                  page = i))
+  
   search_content <- fromJSON(content(search_result, as = "text"))
+  
+  search_content <- flatten(search_content)
+  
+  search_content <- as.data.frame(search_content$venues)
+  
+  if (exists(search_content$location == TRUE)){
+    search_content <- select(search_content, name, city, postalCode, address, url, location)
+    
+    search_content <- search_content %>% unnest(c(location, city, address), names_repair = "minimal")
+    colnames(search_content) <- c("name", "city", "postalCode", "address", "url", "longitude", "latitude")
+    search_content$longitude <- as.double(search_content$longitude)
+    search_content$latitude <- as.double(search_content$latitude)
+    
+    venue_data_long[(20*i-19):(20*i),] <- search_content %>%
+      select(name, city, postalCode, address, url, longitude, latitude)
+    
+    Sys.sleep(0.2)    
+  }
+  else{
+    venue_data_long[(20*i-19):(20*i),] <- search_content %>%
+      select(name, city, postalCode, address, url, longitude, latitude)
+    
+    Sys.sleep(0.2)    
+  }
 
-  Sys.sleep(0.2)
 }
+
 
 
 
