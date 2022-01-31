@@ -131,7 +131,10 @@ ggplot() +
 ########## Latvia #####################################
 #######################################################
 
-APIcontent_LV <- GET(url = "https://app.ticketmaster.com/discovery/v2/venues?apikey=7elxdku9GGG5k8j0Xm8KWdANDgecHMV0&locale=*&countryCode=LV")
+APIcontent_LV <- GET(url = "https://app.ticketmaster.com/discovery/v2/venues?",
+                     query = list(apikey = API_Key,
+                                  locale = "*",
+                                  countryCode = "LV"))
 
 # Extract the name, the city, the postalCode and address, as well as the url and the longitude and latitude of the venues to a data frame.
 
