@@ -117,16 +117,3 @@ ggplot() +
         plot.caption = element_text(face = "italic"))
 
 
-
-
-
-#######################################################
-
-ggplot() +
-  geom_polygon(
-    aes(x = long, y = lat, group = group), data = map_data("world", region = "Switzerland"),
-    fill = "grey90",color = "black") +
-  theme_void() + coord_quickmap() +
-  labs(title = "Event locations across Switzerland", caption = "Source: ticketmaster.com") +
-  theme(title = element_text(size=8, face='bold'),
-        plot.caption = element_text(face = "italic"))
