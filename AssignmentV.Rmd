@@ -21,6 +21,10 @@ https://github.com/OliverCarrie/AssignmentV
 
 I will store the API key in an additional R-file, called 'API_Keys', in order to keep it secret.
 
+```{r store API key}
+source("C:/Users/olica/OneDrive/Dokumente/Uni Tübingen/WS 21-22/DS400 - Data Science Project Management/Assignments/AssignmentV/API_Keys.R")
+```
+
 ## 3. Interacting with the API - the basics
 
 ### Load the packages needed to interact with APIs using R.
@@ -44,7 +48,10 @@ library(naniar)
 ### Perform a first GET request, that searches for event venues in Germany (countryCode = "DE"). Extract the content from the response object and inspect the resulting list. Describe what you can see.
 
 ```{r first GET request}
-APIcontent <- GET(url = "https://app.ticketmaster.com/discovery/v2/venues?apikey=7elxdku9GGG5k8j0Xm8KWdANDgecHMV0&locale=*&countryCode=DE")
+APIcontent <- GET(url = "https://app.ticketmaster.com/discovery/v2/venues?",
+                                     query = list(apikey = API_Key,
+                                                  locale = "*",
+                                                  countryCode = "DE"))
 ```
 
 We get a huge list with a status_code of 200, meaning that the operation was a success. Other than that, we have in the list the content that we will need for the rest of the assignment. We extract this via the jsonlite package.
@@ -139,7 +146,10 @@ Since I documented everything so far, I will only replicate the code I already h
 ### Interacting with the API - the basics
 
 ```{r basics_LV}
-APIcontent_LV <- GET(url = "https://app.ticketmaster.com/discovery/v2/venues?apikey=7elxdku9GGG5k8j0Xm8KWdANDgecHMV0&locale=*&countryCode=LV")
+APIcontent_LV <- GET(url = "https://app.ticketmaster.com/discovery/v2/venues?",
+                                     query = list(apikey = API_Key,
+                                                  locale = "*",
+                                                  countryCode = "LV"))
 
 event_LV <- jsonlite::fromJSON(content(APIcontent_LV, as = "text"))
 
