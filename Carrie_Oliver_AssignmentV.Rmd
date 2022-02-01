@@ -1,0 +1,272 @@
+---
+title: "Assignment_V"
+author: "Oliver Carrie"
+date: "31 1 2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_knit$set(echo = TRUE, root.dir = "C:/Users/olica/OneDrive/Dokumente/Uni Tübingen/WS 21-22/DS400 - Data Science Project Management")
+```
+
+# Assignment V: GitHub and the ticketmaster.com API
+
+## 1. Setting up a new GitHub repository
+
+I tried to follow the standard Git workflow. Sometimes I did forget it and mark it too late, but I always tried to document the current changes that I made.
+The hyperlink to the repository is:
+https://github.com/OliverCarrie/AssignmentV
+
+## 2. Getting to know the API
+
+I will store the API key in an additional R-file, called 'API_Keys', in order to keep it secret.
+
+```{r store API key}
+source("C:/Users/olica/OneDrive/Dokumente/Uni Tübingen/WS 21-22/DS400 - Data Science Project Management/Assignments/AssignmentV/API_Keys.R")
+```
+
+## 3. Interacting with the API - the basics
+
+### Load the packages needed to interact with APIs using R.
+
+I loaded all the relevant packages, such as jsonlite and httr. Additionally, for data preparation, I installed tidyverse.
+
+```{r load necessary packages, message = FALSE}
+if (!require("jsonlite")) install.packages("jsonlite")
+if (!require("httr")) install.packages("httr")
+if (!require("rlist")) install.packages("rlist")
+if (!require("tidyverse")) install.packages("tidyverse")
+if (!require("naniar")) install.packages("naniar")
+
+library(jsonlite)
+library(httr)
+library(rlist)
+library(tidyverse)
+library(naniar)
+```
+
+### Perform a first GET request, that searches for event venues in Germany (countryCode = "DE"). Extract the content from the response object and inspect the resulting list. Describe what you can see.
+
+```{r first GET request}
+APIcontent <- GET(url = "https://app.ticketmaster.com/discovery/v2/venues?",
+                                     query = list(apikey = API_Key,
+                                                  locale = "*",
+                                                  countryCode = "DE"))
+```
+
+We get a huge list with a status_code of 200, meaning that the operation was a success. Other than that, we have in the list the content that we will need for the rest of the assignment. We extract this via the jsonlite package.
+
+```{r extract API content}
+event_DE <- jsonlite::fromJSON(content(APIcontent, as = "text"))
+```
+
+What we now see is a list with the information we wanted to get. We have 3 lists in this list, with the most important for us being the 'embedded'-list.
+
+In this we see that we have obtained 20 observations of the first 20 venues, with their name, their type, location, url, cities and other variables belonging to it as well.
+
+Since this is a nested list, we will need some transformation in order to get this list to the dataframe we need.
+
+### Extract the name, the city, the postalCode and address, as well as the url and the longitude and latitude of the venues to a data frame.
+
+As a first step, we use the flatten function on the content, in order to unnest the list.
+
+```{r flatten list}
+venue_data <- flatten(event_DE)
+```
+
+Since we are only interested in the venues in the list, we only focus on this one. This is still a list now, and we want to change it to a dataframe. This is done via the 'as.data.frame' function.
+
+Next, we only select 6 columns that are of interest to us.
+
+```{r convert and select dataframe}
+venue_data <- as.data.frame(venue_data$venues)
+
+venue_data <- select(venue_data, name, city, postalCode, address, url, location)
+str(venue_data)
+```
+
+We now have 20 observations of 6 variables. The problem is that the variables location, city and address are still nested and have further information in themselves. So the next step is to unnest the dataframe with the unnest-function.
+
+```{r unnest df}
+venue_data <- venue_data %>% unnest(c(location, city, address), names_repair = "minimal")
+```
+
+We now have all the variables next to each other, just as we want it. There are two more problems that we now need to tackle.
+
+First, the column names are not correct.
+
+Second, the longitude and latitude are characters and not doubles.
+
+We changes this via the colnames()- and the as.double()-functions.
+
+```{r last changes}
+colnames(venue_data) <- c("name", "city", "postalCode", "address", "url", "longitude", "latitude")
+venue_data$longitude <- as.double(venue_data$longitude)
+venue_data$latitude <- as.double(venue_data$latitude)
+```
+
+After this is done, we now have a look at the dataframe.
+
+```{r first glimpse}
+glimpse(venue_data)
+```
+
+We see that the dataframe looks exactly as the dataframe in the assignment.
+
+## 4. Interacting with the API - advanced
+
+### Check the API documentation under the section Venue Search. How can you request the venues from the remaining results pages?
+
+My idea was to include, in a for-loop, the number per page, so that at each iteration another page gets scraped. Before that I looked at the number of venues and on how many pages they were to be found and saved those two variables.
+
+Then, as a start for the next exercise, I created an empty data with the length of the full dataset
+
+```{r preparation for-loop}
+n <- 12568
+
+entries_per_page <- 20
+
+pages <- floor(n/entries_per_page)
+
+remainder <- n - pages*entries_per_page
+
+
+venue_data_long <- tibble(
+  name = character(n),
+  city = character(n),
+  postalCode = character(n),
+  address = character(n),
+  url = character(n),
+  longitude = double(n),
+  latitude = double(n)
+  )
+```
+
+### Write a for loop that iterates through the results pages and performs a GET request for all venues in Germany. After each iteration, extract the seven variables name, city, postalCode, address, url, longitude, and latitude. Join the information in one large data frame.
+
+So, I was not able to make it. But I tried so man things and it just did not work. So maybe you get points for trying? Because I have been trying many different things and it never worked. This is closest I came to.
+
+```{r for-loop, eval=FALSE}
+for (i in 1:pages) {
+  search_result <- GET(url = "https://app.ticketmaster.com/discovery/v2/venues?",
+                                     query = list(apikey = API_Key,
+                                                  locale = "*",
+                                                  countryCode = "DE",
+                                                  page = i-1))
+  
+  search_content <- fromJSON(content(search_result, as = "text"))[["_embedded"]][["venues"]]
+  
+  if (exists("search_contentlocation")){
+    search_content <- select(search_content, name, city, postalCode, address, url, location)
+    
+    search_content <- search_content %>% unnest(c(location, city, address), names_repair = "minimal")
+    colnames(search_content) <- c("name", "city", "postalCode", "address", "url", "longitude", "latitude")
+    search_content$longitude <- as.double(search_content$longitude)
+    search_content$latitude <- as.double(search_content$latitude)
+    
+    venue_data_long[(20*i-19):(20*i),] <- search_content %>%
+      select(name, city, postalCode, address, url, longitude, latitude)
+    
+    time = 0.4
+    
+  }
+  else{
+    venue_data_long[(20*i-19):(20*i),] <- search_content %>%
+      select(name, city, postalCode, address, url, longitude, latitude)
+    
+    time = 0.4    
+  }
+
+}
+```
+
+What I did was to first create a for-loop that iterates over the number of pages. We first get data from the website, with (i-1) because it starts at page 0. Then we extract the content from this list, which gives us a dataframe with 19 variables.
+
+And now my issues started. I was never able to get a working iteration that works each time. So instead, I inserted an if-else-statement. I will, after the first iteration, have the variable "location" eliminated and replaced by "longitude" and "latitude".
+
+So, as long as the variable "location" exists, I repeat the same procedure as in the first time, giving me the first 20 observations. After that, the variable "location" should not exist anymore and so we can immediately select the required variables.
+
+Unfortunately, this process stops after the first 300 requests. The error code is that the column "longitude" does not exist, but I was not able to figure out why not.
+
+So I keep this code to show you that I really tried to solve it, but after a while, it just did not work anymore.
+
+## 5. Visualizing the extracted data
+
+### Below, you can find code that produces a map of Germany. Add points to the map indicating the locations of the event venues across Germany.
+
+Since the extraction of the data did not work properly, in order to show you that I can insert the points in the dataframe, I inserted the points from the first exercise. Since they are all located in Germany, there is no need to add in the maximal locations.
+
+```{r event_DE}
+ggplot() +
+  geom_polygon(
+    aes(x = long, y = lat, group = group), data = map_data("world", region = "Germany"),
+    fill = "grey90",color = "black") +
+  geom_point(data = venue_data, aes(x = longitude, y = latitude)) +
+  theme_void() + coord_quickmap() +
+  labs(title = "Event locations across Germany", caption = "Source: ticketmaster.com") +
+  theme(title = element_text(size=8, face='bold'),
+        plot.caption = element_text(face = "italic"))
+```
+
+## 6. Event locations in other countries
+
+I used Latvia for my country of choice.
+
+Since I documented everything so far, I will only replicate the code I already have, changing the variables only with the suffix '_LV' in order to show that the new data is for Latvia and not Germany.
+
+### Interacting with the API - the basics
+
+```{r basics_LV}
+APIcontent_LV <- GET(url = "https://app.ticketmaster.com/discovery/v2/venues?",
+                                     query = list(apikey = API_Key,
+                                                  locale = "*",
+                                                  countryCode = "LV"))
+
+event_LV <- jsonlite::fromJSON(content(APIcontent_LV, as = "text"))
+
+venue_data_LV <- flatten(event_LV)
+
+venue_data_LV <- as.data.frame(venue_data_LV$venues)
+
+venue_data_LV <- select(venue_data_LV, name, city, postalCode, address, url, location)
+head(venue_data_LV)
+
+venue_data_LV <- venue_data_LV %>% unnest(c(location, city, address), names_repair = "minimal")
+colnames(venue_data_LV) <- c("name", "city", "postalCode", "address", "url", "longitude", "latitude")
+venue_data_LV$longitude <- as.double(venue_data_LV$longitude)
+venue_data_LV$latitude <- as.double(venue_data_LV$latitude)
+
+glimpse(venue_data_LV)
+```
+
+### Interacting with the API - advanced
+
+
+
+### Visualizing the extracted data
+
+You can get the map for another country by simply changing the region from Germany to Latvia.
+
+Other than that, I realized that some observations do not have a location or that their location is equal to zero. I eliminated them in order to get only those locations that are situated in Latvia and that are relevant to the graph.
+
+I did this using the filter function, keeping those observatiosn where the longitude is unequal to 0. I could have taken the latitude as well.
+
+```{r eliminate observations}
+venue_data_LV_clean <- filter(venue_data_LV, longitude != 0.00000 )
+head(venue_data_LV_clean)
+```
+
+Then, we create the graph for the venues in Latvia. Now, all the observations are located in Latvia.
+
+```{r graph LV}
+ggplot() +
+  geom_polygon(
+    aes(x = long, y = lat, group = group), data = map_data("world", region = "Latvia"),
+    fill = "grey90",color = "black") +
+  geom_point(data = venue_data_LV_clean, aes(x = longitude, y = latitude)) +
+  theme_void() + 
+  coord_quickmap() +
+  labs(title = "Event locations across Latvia", caption = "Source: ticketmaster.com") +
+  theme(title = element_text(size=8, face='bold'),
+        plot.caption = element_text(face = "italic"))
+```
