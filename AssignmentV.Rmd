@@ -117,13 +117,84 @@ We see that the dataframe looks exactly as the dataframe in the assignment.
 
 ### Check the API documentation under the section Venue Search. How can you request the venues from the remaining results pages?
 
+My idea was to include, in a for-loop, the number per page, so that at each iteration another page gets scraped. Before that I looked at the number of venues and on how many pages they were to be found and saved those two variables.
+
+Then, as a start for the next exercise, I created an empty data with the length of the full dataset
+
+```{r preparation for-loop}
+n <- 12568
+
+entries_per_page <- 20
+
+pages <- floor(n/entries_per_page)
+
+remainder <- n - pages*entries_per_page
+
+
+venue_data_long <- tibble(
+  name = character(n),
+  city = character(n),
+  postalCode = character(n),
+  address = character(n),
+  url = character(n),
+  longitude = double(n),
+  latitude = double(n)
+  )
+```
+
 ### Write a for loop that iterates through the results pages and performs a GET request for all venues in Germany. After each iteration, extract the seven variables name, city, postalCode, address, url, longitude, and latitude. Join the information in one large data frame.
+
+So, I was not able to make it. But I tried so man things and it just did not work. So maybe you get points for trying? Because I have been trying many different things and it never worked. This is closest I came to.
+
+```{r for-loop, eval=FALSE}
+for (i in 1:pages) {
+  search_result <- GET(url = "https://app.ticketmaster.com/discovery/v2/venues?",
+                                     query = list(apikey = API_Key,
+                                                  locale = "*",
+                                                  countryCode = "DE",
+                                                  page = i-1))
+  
+  search_content <- fromJSON(content(search_result, as = "text"))[["_embedded"]][["venues"]]
+  
+  if (exists("search_contentlocation")){
+    search_content <- select(search_content, name, city, postalCode, address, url, location)
+    
+    search_content <- search_content %>% unnest(c(location, city, address), names_repair = "minimal")
+    colnames(search_content) <- c("name", "city", "postalCode", "address", "url", "longitude", "latitude")
+    search_content$longitude <- as.double(search_content$longitude)
+    search_content$latitude <- as.double(search_content$latitude)
+    
+    venue_data_long[(20*i-19):(20*i),] <- search_content %>%
+      select(name, city, postalCode, address, url, longitude, latitude)
+    
+    time = 0.4
+    
+  }
+  else{
+    venue_data_long[(20*i-19):(20*i),] <- search_content %>%
+      select(name, city, postalCode, address, url, longitude, latitude)
+    
+    time = 0.4    
+  }
+
+}
+```
+
+What I did was to first create a for-loop that iterates over the number of pages. We first get data from the website, with (i-1) because it starts at page 0. Then we extract the content from this list, which gives us a dataframe with 19 variables.
+
+And now my issues started. I was never able to get a working iteration that works each time. So instead, I inserted an if-else-statement. I will, after the first iteration, have the variable "location" eliminated and replaced by "longitude" and "latitude".
+
+So, as long as the variable "location" exists, I repeat the same procedure as in the first time, giving me the first 20 observations. After that, the variable "location" should not exist anymore and so we can immediately select the required variables.
+
+Unfortunately, this process stops after the first 300 requests. The error code is that the column "longitude" does not exist, but I was not able to figure out why not.
+
+So I keep this code to show you that I really tried to solve it, but after a while, it just did not work anymore.
 
 ## 5. Visualizing the extracted data
 
 ### Below, you can find code that produces a map of Germany. Add points to the map indicating the locations of the event venues across Germany.
 
-
+Since the extraction of the data did not work properly, in order to show you that I can insert the points in the dataframe, I inserted the points from the first exercise. Since they are all located in Germany, there is no need to add in the maximal locations.
 
 ```{r event_DE}
 ggplot() +
