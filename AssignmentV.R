@@ -101,11 +101,11 @@ for (i in 1:pages) {
                                      query = list(apikey = API_Key,
                                                   locale = "*",
                                                   countryCode = "DE",
-                                                  page = i))
+                                                  page = i-1))
   
   search_content <- fromJSON(content(search_result, as = "text"))[["_embedded"]][["venues"]]
   
-  if (exists(search_content$location == TRUE)){
+  if (exists("search_contentlocation")){
     search_content <- select(search_content, name, city, postalCode, address, url, location)
     
     search_content <- search_content %>% unnest(c(location, city, address), names_repair = "minimal")
@@ -116,7 +116,8 @@ for (i in 1:pages) {
     venue_data_long[(20*i-19):(20*i),] <- search_content %>%
       select(name, city, postalCode, address, url, longitude, latitude)
     
-    Sys.sleep(0.2)    
+    time = 0.4
+    
   }
   else{
     venue_data_long[(20*i-19):(20*i),] <- search_content %>%
@@ -126,8 +127,6 @@ for (i in 1:pages) {
   }
 
 }
-
-search_content <- fromJSON(content(search_result, as = "text"))[["_embedded"]][["venues"]]
 
 
 
